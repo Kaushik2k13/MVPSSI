@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat Room - WebRTC Protocol</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1a202c;
+    }
+    .protocol-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .protocol-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .protocol-desc {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .join-form {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #374151;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s;
+      width: 100%;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    .btn-danger {
+      background: #ef4444;
+    }
+    .btn-success {
+      background: #10b981;
+    }
+    .room-container {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .room-header {
+      background: #f8fafc;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .room-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .video-section {
+      padding: 1rem;
+      text-align: center;
+    }
+    .video-container {
+      display: none;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    #webrtcVideo {
+      width: 100%;
+      max-height: 500px;
+      border-radius: 8px;
+      background: #000;
+    }
+    .fullscreen-btn {
+      margin-top: 0.5rem;
+    }
+    .chat-section {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 1rem;
+      padding: 1rem;
+      min-height: 400px;
+    }
+    .users-panel {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .users-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #374151;
+    }
+    .user-item {
+      padding: 0.5rem;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+    }
+    .messages {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+    .message {
+      margin-bottom: 0.75rem;
+      padding: 0.5rem;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .message .username {
+      font-weight: 600;
+      color: #667eea;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .input-row input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .input-row button {
+      padding: 0.75rem 1rem;
+      white-space: nowrap;
+      width: auto;
+    }
+    .fullscreen-video {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: none !important;
+      z-index: 9999 !important;
+      object-fit: contain !important;
+    }
+    .status {
+      margin-top: 1rem;
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="protocol-header">
+    <div class="protocol-title">WebRTC Protocol</div>
+    <div class="protocol-desc">Real-time peer-to-peer video streaming</div>
+  </div>
+  
+  <div class="container">
+    <div class="join-form" id="joinContainer">
+      <div class="form-group">
+        <label for="roomInput">Room ID</label>
+        <input type="text" id="roomInput" placeholder="Enter room ID" value="test-room"/>
+      </div>
+      <div class="form-group">
+        <label for="nameInput">Your Name</label>
+        <input type="text" id="nameInput" placeholder="Enter your name"/>
+      </div>
+      <button class="btn" id="joinBtn">Join Room</button>
+      <div class="status" id="status"></div>
+    </div>
+    
+    <div class="room-container" id="chatContainer">
+      <div class="room-header">
+        <div class="room-title" id="roomTitle">Room</div>
+        <button class="btn btn-danger" id="leaveBtn">Leave</button>
+      </div>
+      
+      <div class="video-section">
+        <div class="video-container" id="videoContainer">
+          <video id="webrtcVideo" autoplay muted></video>
+        </div>
+        <button class="btn fullscreen-btn" id="fullscreenBtn" style="display:none;">⛶ Fullscreen</button>
+      </div>
+      
+      <div class="chat-section">
+        <div class="users-panel">
+          <div class="users-title">👥 Online</div>
+          <div id="usersList"></div>
+        </div>
+        <div class="chat-main">
+          <div class="messages" id="messages"></div>
+          <div class="input-row">
+            <input type="text" id="messageInput" placeholder="Type message..." />
+            <button class="btn" id="sendBtn">Send</button>
+            <button class="btn btn-success" id="shareBtn">Share</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentRoom = null;
+    let currentUser = null;
+    let isSharing = false;
+    let peerConnections = {};
+    let localStream = null;
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    document.getElementById('joinBtn').addEventListener('click', () => {
+      const room = document.getElementById('roomInput').value.trim();
+      const name = document.getElementById('nameInput').value.trim();
+      
+      if (!room || !name) {
+        alert('Please enter both room ID and your name.');
+        return;
+      }
+      
+      currentRoom = room;
+      currentUser = name;
+      
+      socket.emit('join-room', { room, name });
+      document.getElementById('status').textContent = `Joining room: ${room} as ${name}`;
+    });
+
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+    document.getElementById('shareBtn').addEventListener('click', toggleScreenShare);
+    document.getElementById('leaveBtn').addEventListener('click', leaveChat);
+    document.getElementById('webrtcVideo').addEventListener('click', toggleFullscreen);
+    document.getElementById('fullscreenBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFullscreen();
+    });
+
+    function sendMessage() {
+      const messageInput = document.getElementById('messageInput');
+      const message = messageInput.value.trim();
+      
+      if (message && currentRoom && currentUser) {
+        socket.emit('message', { room: currentRoom, user: currentUser, message });
+        messageInput.value = '';
+      }
+    }
+
+    function addMessage(user, message, isSystem = false) {
+      const messagesDiv = document.getElementById('messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      
+      if (isSystem) {
+        messageDiv.innerHTML = `<em>${message}</em>`;
+        messageDiv.style.color = '#666';
+      } else {
+        messageDiv.innerHTML = `<span class="username">${user}:</span> ${message}`;
+      }
+      
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function updateUsersList(users) {
+      const usersList = document.getElementById('usersList');
+      usersList.innerHTML = '';
+      users.forEach(user => {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-item';
+        userDiv.textContent = user;
+        usersList.appendChild(userDiv);
+      });
+    }
+
+    socket.on('joined-room', ({ room, user, users }) => {
+      document.getElementById('joinContainer').style.display = 'none';
+      document.getElementById('chatContainer').style.display = 'block';
+      document.getElementById('roomTitle').textContent = `Room: ${room}`;
+      addMessage('', `${user} joined the room`, true);
+      updateUsersList(users);
+    });
+
+    function toggleFullscreen() {
+      const video = document.getElementById('webrtcVideo');
+      const videoContainer = document.getElementById('videoContainer');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      
+      if (videoContainer.style.display === 'none') return;
+      
+      if (video.classList.contains('fullscreen-video')) {
+        video.classList.remove('fullscreen-video');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.title = 'Enter Fullscreen';
+      } else {
+        video.classList.add('fullscreen-video');
+        fullscreenBtn.textContent = '⛷';
+        fullscreenBtn.title = 'Exit Fullscreen';
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const video = document.getElementById('webrtcVideo');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        if (video.classList.contains('fullscreen-video')) {
+          video.classList.remove('fullscreen-video');
+          fullscreenBtn.textContent = '⛶';
+          fullscreenBtn.title = 'Enter Fullscreen';
+        }
+      }
+    });
+
+    socket.on('user-joined', ({ user, users, userId }) => {
+      addMessage('', `${user} joined the room`, true);
+      updateUsersList(users);
+      // Send offer to new user if we're sharing
+      if (isSharing && localStream) {
+        setTimeout(() => {
+          createPeerConnection(userId, true);
+        }, 1000);
+      }
+    });
+
+    socket.on('user-left', ({ user, users, userId }) => {
+      addMessage('', `${user} left the room`, true);
+      updateUsersList(users);
+      if (peerConnections[userId]) {
+        peerConnections[userId].close();
+        delete peerConnections[userId];
+      }
+    });
+
+    socket.on('message', ({ user, message }) => {
+      addMessage(user, message);
+    });
+
+    async function toggleScreenShare() {
+      const shareBtn = document.getElementById('shareBtn');
+      
+      if (!isSharing) {
+        try {
+          // Check if we're on HTTPS or localhost
+          if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            alert('Screen sharing requires HTTPS or localhost');
+            return;
+          }
+          
+          localStream = await navigator.mediaDevices.getDisplayMedia({ 
+            video: { 
+              mediaSource: 'screen',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }, 
+            audio: true 
+          });
+          
+          const video = document.getElementById('webrtcVideo');
+          const videoContainer = document.getElementById('videoContainer');
+          const fullscreenBtn = document.getElementById('fullscreenBtn');
+          video.srcObject = localStream;
+          videoContainer.style.display = 'block';
+          fullscreenBtn.style.display = 'block';
+          video.muted = true; // Prevent feedback
+          
+          shareBtn.textContent = 'Stop Sharing';
+          shareBtn.style.backgroundColor = '#dc3545';
+          isSharing = true;
+          
+          // Send offers to all existing users
+          socket.to(currentRoom).emit('webrtc-share-started', { user: currentUser, userId: socket.id });
+          
+          // Create connections for existing users in room
+          setTimeout(() => {
+            socket.emit('get-room-users', { room: currentRoom });
+          }, 500);
+          
+          localStream.getVideoTracks()[0].onended = () => {
+            stopScreenShare();
+          };
+        } catch (err) {
+          console.error('Screen sharing error:', err);
+          if (err.name === 'NotAllowedError') {
+            alert('Screen sharing permission denied. Please click "Share" and allow access.');
+          } else if (err.name === 'NotSupportedError') {
+            alert('Screen sharing not supported in this browser.');
+          } else {
+            alert(`Screen sharing failed: ${err.message}`);
+          }
+        }
+      } else {
+        stopScreenShare();
+      }
+    }
+
+    function stopScreenShare() {
+      const shareBtn = document.getElementById('shareBtn');
+      const video = document.getElementById('webrtcVideo');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      
+      Object.values(peerConnections).forEach(pc => pc.close());
+      peerConnections = {};
+      
+      document.getElementById('videoContainer').style.display = 'none';
+      fullscreenBtn.style.display = 'none';
+      shareBtn.textContent = 'Share Screen';
+      shareBtn.style.backgroundColor = '#28a745';
+      isSharing = false;
+      
+      socket.emit('webrtc-share-stopped', { room: currentRoom, user: currentUser });
+    }
+
+    socket.on('webrtc-share-started', ({ user, userId }) => {
+      addMessage('', `${user} started WebRTC screen sharing`, true);
+      if (user !== currentUser) {
+        // Viewer creates connection and waits for offer
+        createPeerConnection(userId, false);
+      }
+    });
+
+    socket.on('webrtc-share-stopped', ({ user, userId }) => {
+      addMessage('', `${user} stopped WebRTC screen sharing`, true);
+      if (peerConnections[userId]) {
+        peerConnections[userId].close();
+        delete peerConnections[userId];
+      }
+      if (user !== currentUser) {
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        document.getElementById('videoContainer').style.display = 'none';
+        fullscreenBtn.style.display = 'none';
+      }
+    });
+
+    socket.on('room-users', ({ users }) => {
+      if (isSharing && localStream) {
+        users.forEach(userId => {
+          if (userId !== socket.id) {
+            createPeerConnection(userId, true);
+          }
+        });
+      }
+    });
+
+    socket.on('webrtc-offer', async ({ from, offer }) => {
+      console.log('Received offer from:', from);
+      if (!peerConnections[from]) {
+        createPeerConnection(from, false);
+      }
+      const pc = peerConnections[from];
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('webrtc-answer', { to: from, answer });
+    });
+
+    socket.on('webrtc-answer', async ({ from, answer }) => {
+      if (peerConnections[from]) {
+        await peerConnections[from].setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
+
+    socket.on('webrtc-ice-candidate', async ({ from, candidate }) => {
+      if (peerConnections[from]) {
+        await peerConnections[from].addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
+
+    function createPeerConnection(peerId, isInitiator) {
+      console.log('Creating peer connection with:', peerId, 'as initiator:', isInitiator);
+      const pc = new RTCPeerConnection(config);
+      peerConnections[peerId] = pc;
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('webrtc-ice-candidate', { to: peerId, candidate: event.candidate });
+        }
+      };
+
+      pc.ontrack = (event) => {
+        console.log('Received remote stream from:', peerId);
+        const video = document.getElementById('webrtcVideo');
+        const videoContainer = document.getElementById('videoContainer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        video.srcObject = event.streams[0];
+        videoContainer.style.display = 'block';
+        fullscreenBtn.style.display = 'block';
+        video.muted = false;
+        
+        video.play().catch(e => {
+          console.log('Auto-play failed, trying muted:', e);
+          video.muted = true;
+          video.play();
+        });
+      };
+
+      if (isInitiator && localStream) {
+        console.log('Adding local stream tracks');
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
+        
+        pc.createOffer().then(offer => {
+          pc.setLocalDescription(offer);
+          socket.emit('webrtc-offer', { to: peerId, offer });
+          console.log('Sent offer to:', peerId);
+        }).catch(err => {
+          console.error('Error creating offer:', err);
+        });
+      }
+
+      return pc;
+    }
+
+    // Prevent page unload during active sharing
+    window.addEventListener('beforeunload', (e) => {
+      if (isSharing) {
+        e.preventDefault();
+        e.returnValue = 'Screen sharing is active. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    });
+
+    function leaveChat() {
+      if (confirm('Are you sure you want to leave the chat?')) {
+        socket.disconnect();
+        document.getElementById('chatContainer').style.display = 'none';
+        document.getElementById('joinContainer').style.display = 'block';
+        document.getElementById('roomInput').value = '';
+        document.getElementById('nameInput').value = '';
+        document.getElementById('messages').innerHTML = '';
+        currentRoom = null;
+        currentUser = null;
+        if (isSharing) stopScreenShare();
+      }
+    }
+  </script>
+</body>
+</html>

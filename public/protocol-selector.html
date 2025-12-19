@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Protocol Selector - Chat Room</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1a202c;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      padding: 3rem;
+      max-width: 800px;
+      width: 100%;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      color: #6b7280;
+      font-size: 1.1rem;
+    }
+    .protocol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .protocol-card {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .protocol-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    .protocol-card.canvas { border-left: 4px solid #6b7280; }
+    .protocol-card.mse { border-left: 4px solid #059669; }
+    .protocol-card.hls { border-left: 4px solid #dc2626; }
+    .protocol-card.webrtc { border-left: 4px solid #7c3aed; }
+    
+    .protocol-card.canvas:hover { border-color: #6b7280; }
+    .protocol-card.mse:hover { border-color: #059669; }
+    .protocol-card.hls:hover { border-color: #dc2626; }
+    .protocol-card.webrtc:hover { border-color: #7c3aed; }
+    
+    .protocol-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1a202c;
+    }
+    .protocol-desc {
+      color: #6b7280;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .protocol-features {
+      list-style: none;
+    }
+    .protocol-features li {
+      color: #374151;
+      font-size: 0.9rem;
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    .protocol-features li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: 600;
+    }
+    .quick-start {
+      text-align: center;
+      padding: 1.5rem;
+      background: #f0f9ff;
+      border-radius: 12px;
+      border: 1px solid #e0f2fe;
+    }
+    .quick-start-btn {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .quick-start-btn:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">Voice Priority App</div>
+      <div class="subtitle">Choose your preferred streaming protocol</div>
+    </div>
+    
+    <div class="protocol-grid">
+      <div class="protocol-card canvas" onclick="selectProtocol('canvas')">
+        <div class="protocol-title">Canvas Streaming</div>
+        <div class="protocol-desc">Simple image-based streaming using canvas capture</div>
+        <ul class="protocol-features">
+          <li>Easy to implement</li>
+          <li>Universal browser support</li>
+          <li>Good for screen sharing</li>
+        </ul>
+      </div>
+      
+      <div class="protocol-card mse" onclick="selectProtocol('mse')">
+        <div class="protocol-title">MSE Protocol</div>
+        <div class="protocol-desc">Media Source Extensions for low-latency streaming</div>
+        <ul class="protocol-features">
+          <li>Better compression</li>
+          <li>Smooth video playback</li>
+          <li>Audio synchronization</li>
+        </ul>
+      </div>
+      
+      <div class="protocol-card hls" onclick="selectProtocol('hls')">
+        <div class="protocol-title">HLS Protocol</div>
+        <div class="protocol-desc">HTTP Live Streaming for adaptive video delivery</div>
+        <ul class="protocol-features">
+          <li>Adaptive bitrate</li>
+          <li>Industry standard</li>
+          <li>Scalable delivery</li>
+        </ul>
+      </div>
+      
+      <div class="protocol-card webrtc" onclick="selectProtocol('webrtc')">
+        <div class="protocol-title">WebRTC Protocol</div>
+        <div class="protocol-desc">Real-time peer-to-peer video streaming</div>
+        <ul class="protocol-features">
+          <li>Direct peer connection</li>
+          <li>Real-time streaming</li>
+          <li>Low latency</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="quick-start">
+      <button class="quick-start-btn" onclick="selectProtocol('webrtc')">
+        🚀 Quick Start with Canvas
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function selectProtocol(protocol) {
+      if (protocol === 'canvas') {
+        window.location.href = 'index.html';
+      } else if (protocol === 'mse') {
+        window.location.href = 'index-mse.html';
+      } else if (protocol === 'hls') {
+        window.location.href = 'index-hls.html';
+      } else if (protocol === 'webrtc') {
+        window.location.href = 'index-webrtc.html';
+      }
+    }
+  </script>
+</body>
+</html>
